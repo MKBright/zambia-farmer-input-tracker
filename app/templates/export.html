@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Export · Farm Input Tracker{% endblock %}
+{% block content %}
+  <h1>Export CSV</h1>
+  <p class="lede">
+    Download the record book as CSV. The files open in Excel or LibreOffice.
+    This copy includes {{ stats.farmers }} farmer{% if stats.farmers != 1 %}s{% endif %}.
+  </p>
+
+  <ul class="export-list">
+    {% for kind, title, description in links %}
+      <li class="card">
+        <div>
+          <h2>{{ title }}</h2>
+          <p>{{ description }}</p>
+        </div>
+        <a class="button" href="{{ url_for('main.download_csv', kind=kind) }}">Download {{ kind }}.csv</a>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <section class="card">
+    <h2>About the summary files</h2>
+    <p>
+      Farmer summary has one row for each crop a farmer planted. The yield
+      column is kilograms per hectare. Inputs used are listed in one cell,
+      already converted to kilograms.
+    </p>
+    <p>
+      District summary has one row for each district and crop. It does not
+      include an “all districts” row, so you can add the rows in a spreadsheet
+      without counting anyone twice. The on-screen report has the combined view.
+    </p>
+  </section>
+{% endblock %}

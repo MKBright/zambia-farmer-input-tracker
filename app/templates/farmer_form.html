@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Register a farmer · Farm Input Tracker{% endblock %}
+{% block content %}
+  <p class="back"><a href="{{ url_for('main.farmers') }}">Back to farmers</a></p>
+  <h1>Register a farmer</h1>
+  <p class="lede">One row per person. The NRC is stored so the same farmer is not entered twice.</p>
+
+  {% if errors %}
+    <div class="banner error" role="alert">
+      <p>Please fix the following:</p>
+      <ul>
+        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form class="card form" method="post" action="{{ url_for('main.new_farmer') }}">
+    <label for="full_name">Full name</label>
+    <input id="full_name" name="full_name" required maxlength="80" value="{{ form.get('full_name', '') }}" autocomplete="name">
+
+    <label for="nrc">NRC</label>
+    <input id="nrc" name="nrc" required value="{{ form.get('nrc', '') }}" placeholder="123456/78/1" inputmode="numeric" autocomplete="off">
+    <p class="hint">National Registration Card number, written as 6 digits / 2 digits / 1 digit. The check is only the shape, not whether the card was issued. The middle pair is the district where the card was issued, which may differ from the farming district.</p>
+
+    <label for="camp">Camp</label>
+    <input id="camp" name="camp" required maxlength="60" value="{{ form.get('camp', '') }}">
+    <p class="hint">Agricultural camp, for example Kanakantapa. A camp is the area one extension officer covers.</p>
+
+    <label for="district">District</label>
+    <input id="district" name="district" required maxlength="60" value="{{ form.get('district', '') }}">
+    <p class="hint">For example Chongwe. Use the same spelling each time so the district report groups them together.</p>
+
+    <label for="phone">Phone <span class="optional">(optional)</span></label>
+    <input id="phone" name="phone" value="{{ form.get('phone', '') }}" placeholder="0971234567" inputmode="tel" autocomplete="tel">
+    <p class="hint">A mobile number such as 0971234567 or +260971234567. Leave blank if the farmer has none.</p>
+
+    <button type="submit">Save farmer</button>
+  </form>
+{% endblock %}

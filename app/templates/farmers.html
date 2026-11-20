@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Farmers · Farm Input Tracker{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <div>
+      <h1>Farmers</h1>
+      <p class="lede">Search by name, NRC, camp, district, or phone.</p>
+    </div>
+    <a class="button" href="{{ url_for('main.new_farmer') }}">Register a farmer</a>
+  </div>
+
+  <form class="search" method="get" action="{{ url_for('main.farmers') }}">
+    <label for="q">Search</label>
+    <div class="search-row">
+      <input id="q" name="q" value="{{ search }}" placeholder="For example Banda, or 234511">
+      <button type="submit">Search</button>
+      {% if search %}
+        <a class="button secondary" href="{{ url_for('main.farmers') }}">Clear</a>
+      {% endif %}
+    </div>
+  </form>
+
+  {% if farmers %}
+    <div class="table-wrap card">
+      <table>
+        <caption class="sr-only">Registered farmers</caption>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>NRC</th>
+            <th>Camp</th>
+            <th>District</th>
+            <th>Phone</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for farmer in farmers %}
+            <tr>
+              <td><a href="{{ url_for('main.farmer_detail', farmer_id=farmer.id) }}">{{ farmer.full_name }}</a></td>
+              <td class="nrc">{{ farmer.nrc }}</td>
+              <td>{{ farmer.camp }}</td>
+              <td>{{ farmer.district }}</td>
+              <td>{{ farmer.phone or "—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% elif search %}
+    <p class="card empty">No farmers matched “{{ search }}”.</p>
+  {% else %}
+    <p class="card empty">No farmers yet. Register one to start a record book.</p>
+  {% endif %}
+{% endblock %}

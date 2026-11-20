@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% set farmer = summary.farmer %}
+{% block title %}{{ farmer.full_name }} · Farm Input Tracker{% endblock %}
+{% block content %}
+  <p class="back"><a href="{{ url_for('main.farmers') }}">Back to farmers</a></p>
+
+  <div class="page-head">
+    <div>
+      <h1>{{ farmer.full_name }}</h1>
+      <p class="lede">
+        <span class="nrc">{{ farmer.nrc }}</span>
+        · {{ farmer.camp }}, {{ farmer.district }}
+        · {{ farmer.phone or "no phone recorded" }}
+      </p>
+    </div>
+  </div>
+
+  <p class="actions">
+    <a class="button" href="{{ url_for('main.new_input', farmer_id=farmer.id) }}">Record input</a>
+    <a class="button" href="{{ url_for('main.new_planting', farmer_id=farmer.id) }}">Record planting</a>
+    <a class="button" href="{{ url_for('main.new_harvest', farmer_id=farmer.id) }}">Record harvest</a>
+  </p>
+
+  <section class="card">
+    <h2>Yield summary</h2>
+    {% if summary.crops %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Yield by crop for {{ farmer.full_name }}</caption>
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th class="num">Planted (ha)</th>
+              <th class="num">Harvested (ha)</th>
+              <th class="num">50 kg bags</th>
+              <th class="num">Yield</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for crop in summary.crops %}
+              <tr>
+                <td>{{ crop.crop }}</td>
+                <td class="num">{{ crop.planted_hectares | ha }}</td>
+                <td class="num">{{ crop.harvested_hectares | ha }}</td>
+                <td class="num">{{ crop.bags | num }}</td>
+                <td class="num">
+                  {% if crop.yield_kg_per_ha is none %}
+                    <span class="muted">No harvest yet</span>
+                  {% else %}
+                    <strong class="yield">{{ crop.yield_kg_per_ha | kg }} kg/ha</strong>
+                  {% endif %}
+                  {% if crop.unharvested_hectares > 0 %}
+                    <span class="hint block">{{ crop.unharvested_hectares | ha }} ha has no harvest yet and is not in this yield.</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>No planting recorded yet.</p>
+    {% endif %}
+    <p class="hint">
+      Inputs used:
+      {% if summary.inputs_phrase %}{{ summary.inputs_phrase }}{% else %}none recorded{% endif %}.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Inputs received</h2>
+    {% if summary.inputs %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Inputs received by {{ farmer.full_name }}</caption>
+          <thead>
+            <tr>
+              <th>Input</th>
+              <th>Quantity</th>
+              <th class="num">Kilograms</th>
+              <th>Source</th>
+              <th>Date</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in summary.inputs %}
+              <tr>
+                <td>{{ item.input_type }}</td>
+                <td>{{ item.quantity_label }}</td>
+                <td class="num">{{ item.kg_equivalent | kg }}</td>
+                <td>{{ item.source }}</td>
+                <td>{{ item.received_date | humandate }}</td>
+                <td>{{ item.notes or "—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>No inputs recorded yet. <a href="{{ url_for('main.new_input', farmer_id=farmer.id) }}">Record an input</a>.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Planting</h2>
+    {% if summary.plantings %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Fields planted by {{ farmer.full_name }}</caption>
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th>Field</th>
+              <th>Planted</th>
+              <th>Harvest so far</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for planting in summary.plantings %}
+              <tr>
+                <td>{{ planting.crop }}</td>
+                <td>{{ planting.area_label }}</td>
+                <td>{{ planting.planting_date | humandate }}</td>
+                <td>
+                  {% if planting.has_harvest %}
+                    {{ planting.bags_harvested | num }} × 50 kg bags
+                  {% else %}
+                    No harvest yet
+                  {% endif %}
+                </td>
+                <td>{{ planting.notes or "—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>No planting recorded yet. <a href="{{ url_for('main.new_planting', farmer_id=farmer.id) }}">Record a planting</a>.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Harvests</h2>
+    {% if summary.harvests %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Harvests for {{ farmer.full_name }}</caption>
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th>Planted</th>
+              <th class="num">50 kg bags</th>
+              <th class="num">Kilograms</th>
+              <th>Harvested</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for harvest in summary.harvests %}
+              <tr>
+                <td>{{ harvest.crop }}</td>
+                <td>{{ harvest.planting_date | humandate }}</td>
+                <td class="num">{{ harvest.bags_50kg | num }}</td>
+                <td class="num">{{ (harvest.bags_50kg * 50) | kg }}</td>
+                <td>{{ harvest.harvest_date | humandate }}</td>
+                <td>{{ harvest.notes or "—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>No harvest recorded yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

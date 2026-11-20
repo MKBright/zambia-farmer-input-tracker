@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Reports · Farm Input Tracker{% endblock %}
+{% block content %}
+  <h1>Reports</h1>
+  <p class="lede">
+    Yield per hectare and inputs used, for one farmer’s district or for every
+    district in this record book. Yield ignores fields that have no harvest yet.
+  </p>
+
+  <form class="search" method="get" action="{{ url_for('main.reports') }}">
+    <label for="district">District</label>
+    <div class="search-row">
+      <select id="district" name="district">
+        <option value="">All districts</option>
+        {% for name in report.district_names %}
+          <option value="{{ name }}" {% if report.selected == name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">Show</button>
+    </div>
+  </form>
+
+  {% if report.current.farmer_count == 0 %}
+    <p class="card empty">
+      {% if report.unknown_district %}
+        No farmers are recorded in {{ report.selected }}.
+      {% else %}
+        No farmers yet. <a href="{{ url_for('main.new_farmer') }}">Register a farmer</a> to build a report.
+      {% endif %}
+    </p>
+  {% else %}
+    <section class="card">
+      <h2>{{ report.current.district }}</h2>
+      <p>
+        {{ report.current.farmer_count }}
+        farmer{% if report.current.farmer_count != 1 %}s{% endif %}.
+        {{ report.current.fisp_farmer_count }}
+        received at least one FISP input.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Crop yield for {{ report.current.district }}</caption>
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th class="num">Planted (ha)</th>
+              <th class="num">Harvested (ha)</th>
+              <th class="num">50 kg bags</th>
+              <th class="num">Yield</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for crop in report.current.crops %}
+              <tr>
+                <td>{{ crop.crop }}</td>
+                <td class="num">{{ crop.planted_hectares | ha }}</td>
+                <td class="num">{{ crop.harvested_hectares | ha }}</td>
+                <td class="num">{{ crop.bags | num }}</td>
+                <td class="num">
+                  {% if crop.yield_kg_per_ha is none %}
+                    <span class="muted">No harvest yet</span>
+                  {% else %}
+                    <strong class="yield">{{ crop.yield_kg_per_ha | kg }} kg/ha</strong>
+                  {% endif %}
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5">No planting recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Inputs used</h3>
+      {% if report.current.input_totals %}
+        <div class="table-wrap">
+          <table>
+            <caption class="sr-only">Inputs used in {{ report.current.district }}</caption>
+            <thead>
+              <tr>
+                <th>Input</th>
+                <th class="num">Kilograms</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in report.current.input_totals %}
+                <tr>
+                  <td>{{ item.input_type }}</td>
+                  <td class="num">{{ item.kg | kg }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p>No inputs recorded.</p>
+      {% endif %}
+    </section>
+
+    {% if report.show_comparison %}
+      <section class="card">
+        <h2>Compare districts</h2>
+        <div class="table-wrap">
+          <table>
+            <caption class="sr-only">Yield by district</caption>
+            <thead>
+              <tr>
+                <th>District</th>
+                <th class="num">Farmers</th>
+                <th class="num">FISP farmers</th>
+                {% for crop in report.crop_names %}
+                  <th class="num">{{ crop }} (kg/ha)</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for block in report.districts %}
+                <tr>
+                  <td><a href="{{ url_for('main.reports', district=block.district) }}">{{ block.district }}</a></td>
+                  <td class="num">{{ block.farmer_count }}</td>
+                  <td class="num">{{ block.fisp_farmer_count }}</td>
+                  {% for crop in report.crop_names %}
+                    {% set value = block.yield_by_crop.get(crop) %}
+                    <td class="num">{% if value is none %}—{% else %}{{ value | kg }}{% endif %}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>Farmers in this view</h2>
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Farmer yields</caption>
+          <thead>
+            <tr>
+              <th>Farmer</th>
+              <th>Camp</th>
+              <th>District</th>
+              <th>Crop</th>
+              <th class="num">Planted (ha)</th>
+              <th class="num">50 kg bags</th>
+              <th class="num">Yield</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in report.current.farmer_rows %}
+              <tr>
+                <td><a href="{{ url_for('main.farmer_detail', farmer_id=row.farmer.id) }}">{{ row.farmer.full_name }}</a></td>
+                <td>{{ row.farmer.camp }}</td>
+                <td>{{ row.farmer.district }}</td>
+                {% if row.crop %}
+                  <td>{{ row.crop.crop }}</td>
+                  <td class="num">{{ row.crop.planted_hectares | ha }}</td>
+                  <td class="num">{{ row.crop.bags | num }}</td>
+                  <td class="num">
+                    {% if row.crop.yield_kg_per_ha is none %}—{% else %}{{ row.crop.yield_kg_per_ha | kg }} kg/ha{% endif %}
+                  </td>
+                {% else %}
+                  <td colspan="4">No planting recorded</td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

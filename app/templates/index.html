@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Home · Farm Input Tracker{% endblock %}
+{% block content %}
+  <h1>A camp notebook for inputs and harvests</h1>
+  <p class="lede">
+    Small-scale farmers in Zambia often receive maize seed, D-Compound, and
+    Urea through the Farmer Input Support Programme, or they buy inputs
+    themselves. This tool is a simple record book for a camp extension
+    officer: who received what, when the field was planted, and how many
+    50&nbsp;kg bags came off it.
+  </p>
+
+  <section class="stats" aria-label="Totals">
+    <article class="card stat">
+      <p class="stat-value">{{ stats.farmers }}</p>
+      <p class="stat-label">Farmers</p>
+    </article>
+    <article class="card stat">
+      <p class="stat-value">{{ stats.inputs }}</p>
+      <p class="stat-label">Input records</p>
+    </article>
+    <article class="card stat">
+      <p class="stat-value">{{ stats.hectares | ha }}</p>
+      <p class="stat-label">Hectares planted</p>
+    </article>
+    <article class="card stat">
+      <p class="stat-value">{{ stats.bags | num }}</p>
+      <p class="stat-label">50 kg bags harvested</p>
+    </article>
+  </section>
+
+  <p class="actions">
+    <a class="button" href="{{ url_for('main.new_farmer') }}">Register a farmer</a>
+    <a class="button secondary" href="{{ url_for('main.reports') }}">Open reports</a>
+  </p>
+
+  {% if stats.farmers == 0 %}
+    <section class="card empty">
+      <h2>No farmers yet</h2>
+      <p>
+        Register the first farmer, or load the practice records with
+        <code>python scripts/seed_sample_data.py</code> and refresh this page.
+        The sample uses made-up names and NRC numbers.
+      </p>
+    </section>
+  {% else %}
+    <div class="split">
+      <section class="card">
+        <h2>Latest inputs</h2>
+        {% if recent_inputs %}
+          <ul class="activity">
+            {% for item in recent_inputs %}
+              <li>
+                <a href="{{ url_for('main.farmer_detail', farmer_id=item.farmer_id) }}">{{ item.full_name }}</a>
+                received {{ item.quantity_label }} of {{ item.input_type }}
+                <span class="meta">{{ item.source }} · {{ item.received_date | humandate }} · {{ item.district }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>No inputs recorded yet.</p>
+        {% endif %}
+      </section>
+      <section class="card">
+        <h2>Latest harvests</h2>
+        {% if recent_harvests %}
+          <ul class="activity">
+            {% for item in recent_harvests %}
+              <li>
+                <a href="{{ url_for('main.farmer_detail', farmer_id=item.farmer_id) }}">{{ item.full_name }}</a>
+                harvested {{ item.bags_50kg | num }} × 50 kg bags of {{ item.crop }}
+                <span class="meta">{{ item.harvest_date | humandate }} · {{ item.district }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>No harvests recorded yet.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    {% if district_names %}
+      <section class="card">
+        <h2>District reports</h2>
+        <p class="hint">Yield per hectare for every farmer recorded in that district.</p>
+        <p class="chip-row">
+          {% for name in district_names %}
+            <a class="chip" href="{{ url_for('main.reports', district=name) }}">{{ name }}</a>
+          {% endfor %}
+        </p>
+      </section>
+    {% endif %}
+  {% endif %}
+
+  <section class="card how">
+    <h2>How the numbers work</h2>
+    <ul>
+      <li>1 lima is stored as 0.25 hectares. The page still shows the lima figure you typed.</li>
+      <li>A 50 kg fertilizer bag counts as 50 kilograms. A 10 kg seed bag counts as 10.</li>
+      <li>Yield is harvested kilograms divided by the hectares that already have a harvest.</li>
+      <li>A field with no harvest yet is left out of the yield. A harvest of 0 bags is a failed crop and stays in.</li>
+    </ul>
+  </section>
+{% endblock %}
